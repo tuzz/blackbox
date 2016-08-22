@@ -1,0 +1,57 @@
+function main () {
+  T = true;
+  F = false;
+
+  array50<array3<int>> gates;
+  array3<int> outputIndexes;
+
+  invariant evaluate([T, T, T]) == [F, F, F];
+  invariant evaluate([T, T, F]) == [F, F, T];
+  invariant evaluate([T, F, T]) == [F, T, F];
+  invariant evaluate([T, F, F]) == [F, T, T];
+  invariant evaluate([F, T, T]) == [T, F, F];
+  invariant evaluate([F, T, F]) == [T, F, T];
+  invariant evaluate([F, F, T]) == [T, T, F];
+  invariant evaluate([F, F, F]) == [T, T, T];
+
+  invariant gates.countBy(*inverter?) == 2;
+  invariant gates.all?(*valid?);
+
+  expose gates, outputIndexes;
+};
+
+function^ evaluate (pins) {
+  gates.each(function^ (gate) {
+    a = pins[gate.left];
+    b = pins[gate.right];
+    out = gate.apply(a, b);
+
+    pins.push(out); # TODO - add to stdlib
+  });
+
+  return outputIndexes.map(function^ (index) {
+    return pins[index];
+  });
+};
+
+function apply (gate, a, b) {
+  return if(gate.and?, a && b,
+         if(gate.or?, a || b,
+         if(gate.inverter?, !a,
+         if(gate.duplicate?, a, false))));
+};
+
+function valid? (gate) {
+  return gate.and? || gate.or? || gate.inverter? || gate.duplicate?;
+};
+
+function and? (gate) { return gate.type == 0; };
+function or? (gate) { return gate.type == 1; };
+function inverter? (gate) { return gate.type == 2; };
+function duplicate? (gate) { return gate.type == 3; };
+
+function type (gate) { return gate[0]; };
+function left (gate) { return gate[1]; };
+function right (gate) { return gate[2]; };
+
+main();
